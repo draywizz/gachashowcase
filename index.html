@@ -11,7 +11,7 @@
     --text: #e9ecf5;
     --muted: #8d95b3;
     --focus: #f5b301;
-    --rarity: #a855f7; /* overwritten per card from JS */
+    --rarity: #a855f7;
   }
 
   * { box-sizing: border-box; }
@@ -100,8 +100,7 @@
     border-radius: 8px;
     pointer-events: none;
   }
-  .logo { width: 78%; height: auto; filter: drop-shadow(0 0 14px rgba(58, 160, 255, .55)); }
-  .wordmark { font-size: 40px; font-weight: 800; letter-spacing: .02em; color: #dcebff; }
+  .logo { width: 82%; height: auto; filter: drop-shadow(0 0 14px rgba(58, 160, 255, .55)); }
 
   .card-head {
     display: flex;
@@ -123,7 +122,7 @@
   .art {
     position: relative;
     flex: none;
-    aspect-ratio: 16 / 9; /* matches a YouTube thumbnail, so nothing gets squashed or cropped to a tall box */
+    aspect-ratio: 16 / 9;
     display: grid;
     place-items: center;
     overflow: hidden;
@@ -151,16 +150,13 @@
   .card-meta { margin-top: -4px; font-size: 12px; color: var(--muted); }
   .card-foot {
     margin-top: auto;
-    display: flex;
-    justify-content: space-between;
-    gap: 8px;
-    padding-top: 8px;
+    display: grid;
+    place-items: center;
+    padding-top: 10px;
     border-top: 1px solid rgba(255, 255, 255, .12);
-    font-size: 13px;
-    font-weight: 700;
   }
+  .card-foot img { display: block; height: 26px; width: auto; max-width: 100%; }
 
-  /* holographic foil layers, driven by --bx/--by/--gx/--gy/--hi from the loop */
   .foil, .glare { position: absolute; inset: 0; pointer-events: none; }
   .foil {
     background: repeating-linear-gradient(115deg, #ff2d95 0%, #ffd32d 10%, #2dff8f 20%, #2dc4ff 30%, #8f2dff 40%, #ff2d95 50%);
@@ -177,7 +173,6 @@
   }
   .card.flat .foil { display: none; }
 
-  /* the #1 card gets a multicolour border instead of a flat one */
   .card.apex .front {
     border-color: transparent;
     background:
@@ -289,8 +284,8 @@
 </main>
 
 <script>
-
-const LOGO_SRC = "";
+const LOGO_BACK = "https://evodl.site/demonlist/favicon.png";
+const LOGO_FRONT = "https://evodl.site/demonlist/header.png";
 const TROPICAL_LIGHTS_THUMB = "https://i.ytimg.com/vi/USfDd-T2A0I/hqdefault.jpg";
 
 const LEVELS = [
@@ -303,7 +298,6 @@ const LEVELS = [
     video: "https://youtu.be/USfDd-T2A0I",
     thumb: TROPICAL_LIGHTS_THUMB
   },
-  // Placeholders so each tier can be previewed. Remove them once the real list is in.
   { rank: 7,   name: "Sample mythic",    verifier: "Verifier", publisher: "Publisher", id: "0", tags: "Sample", desc: "Placeholder entry for this tier." },
   { rank: 20,  name: "Sample legendary", verifier: "Verifier", publisher: "Publisher", id: "0", tags: "Sample", desc: "Placeholder entry for this tier." },
   { rank: 60,  name: "Sample epic",      verifier: "Verifier", publisher: "Publisher", id: "0", tags: "Sample", desc: "Placeholder entry for this tier." },
@@ -312,7 +306,6 @@ const LEVELS = [
   { rank: 900, name: "Sample common",    verifier: "Verifier", publisher: "Publisher", id: "0", tags: "Sample", desc: "Placeholder entry for this tier." }
 ];
 
-// [tier, last rank in it, label]
 const TIERS = [
   ["apex",      1,        "Top 1"],
   ["mythic",    10,       "Top 10"],
@@ -358,12 +351,10 @@ const el = {
 /* ---------- rendering ---------- */
 
 function renderBack() {
-  el.back.innerHTML = LOGO_SRC
-    ? '<img class="logo" draggable="false" alt="EVODL" src="' + escapeHtml(LOGO_SRC) + '">'
-    : '<span class="wordmark">EVODL</span>';
+  el.back.innerHTML = '<img class="logo" draggable="false" alt="EVODL" src="' + LOGO_BACK + '">';
+  byId("cardFoot").innerHTML = '<img draggable="false" alt="EVODL" src="' + LOGO_FRONT + '">';
 }
 
-// Same name always gives the same cover colour.
 function coverHue(level) {
   if (level.hue !== undefined) return level.hue;
   const sum = [...level.name].reduce((total, ch) => total + ch.charCodeAt(0), 0);
@@ -376,7 +367,6 @@ function renderCover(level) {
     "linear-gradient(135deg, hsl(" + hue + " 70% 28%), hsl(" + (hue + 60) + " 80% 12%))";
 
   if (level.thumb) {
-    // If the image fails to load, fall back to the generated cover with the level name on it.
     el.art.innerHTML = '<img alt="" draggable="false" src="' + escapeHtml(level.thumb) + '">';
     el.art.querySelector("img").addEventListener("error", () => {
       el.art.innerHTML = "<b>" + escapeHtml(level.name) + "</b>";
@@ -426,10 +416,6 @@ function showLevel(index) {
   byId("cardName").textContent = level.name;
   byId("cardVerifier").textContent = "Verified by " + level.verifier;
   byId("cardPublisher").textContent = "Published by " + level.publisher;
-  byId("cardFoot").innerHTML = [level.difficulty, level.requirement]
-    .filter(Boolean)
-    .map(text => "<span>" + escapeHtml(text) + "</span>")
-    .join("");
 
   byId("title").textContent = "#" + level.rank + " " + level.name;
   const chip = byId("tierChip");
@@ -457,13 +443,12 @@ el.foilBtn.addEventListener("click", () => setFoil(!foilOn));
 
 /* ---------- motion ---------- */
 
-// rotX/rotY are the card's own rotation; tiltX/tiltY is the small extra lean that follows the cursor.
 const motion = {
   rotX: -8, rotY: -25,
   velX: 0, velY: 0,
   tiltX: 0, tiltY: 0,
   tiltTargetX: 0, tiltTargetY: 0,
-  snapX: null, snapY: null,   // when set, ease toward this angle (Flip / Reset)
+  snapX: null, snapY: null,
   autoSpin: true,
   dragging: false,
   lastX: 0, lastY: 0
@@ -547,7 +532,6 @@ function step() {
     }
 
     if (!snapping) {
-      // coast after a throw, then hand over to the slow auto-spin
       m.rotY += m.velY;
       m.rotX += m.velX;
       m.velY *= 0.94;
@@ -556,7 +540,7 @@ function step() {
       const coasting = Math.abs(m.velY) >= 0.3 || Math.abs(m.velX) >= 0.3;
       if (m.autoSpin && !coasting) {
         m.rotY += 0.6;
-        m.rotX += (Math.round(m.rotX / 360) * 360 - m.rotX) * 0.04; // level the card back out
+        m.rotX += (Math.round(m.rotX / 360) * 360 - m.rotX) * 0.04;
       }
     }
   }
