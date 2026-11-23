@@ -122,7 +122,8 @@
 
   .art {
     position: relative;
-    flex: 1;
+    flex: none;
+    aspect-ratio: 16 / 9; /* matches a YouTube thumbnail, so nothing gets squashed or cropped to a tall box */
     display: grid;
     place-items: center;
     overflow: hidden;
@@ -139,15 +140,25 @@
   .art b {
     position: relative;
     padding: 10px;
-    font-size: 32px;
-    line-height: 1;
+    font-size: 22px;
+    line-height: 1.05;
     font-weight: 900;
     text-shadow: 0 2px 10px rgba(0, 0, 0, .8);
   }
   .card img { -webkit-user-drag: none; user-select: none; pointer-events: none; }
 
-  .card-name { font-size: 17px; font-weight: 800; line-height: 1.15; }
-  .card-meta { margin-top: -6px; font-size: 12px; color: var(--muted); }
+  .card-name { margin-top: 4px; font-size: 20px; font-weight: 800; line-height: 1.15; }
+  .card-meta { margin-top: -4px; font-size: 12px; color: var(--muted); }
+  .card-foot {
+    margin-top: auto;
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, .12);
+    font-size: 13px;
+    font-weight: 700;
+  }
 
   /* holographic foil layers, driven by --bx/--by/--gx/--gy/--hi from the loop */
   .foil, .glare { position: absolute; inset: 0; pointer-events: none; }
@@ -249,6 +260,7 @@
           <div class="card-name" id="cardName"></div>
           <div class="card-meta" id="cardVerifier"></div>
           <div class="card-meta" id="cardPublisher"></div>
+          <div class="card-foot" id="cardFoot"></div>
           <div class="foil"></div>
           <div class="glare"></div>
         </div>
@@ -277,15 +289,9 @@
 </main>
 
 <script>
-/*
-  Edit LEVELS to use your own list. Only rank and name are required.
-  thumb: image URL or data URI for the art area (a generated cover is used when empty or broken).
-  hue:   optional 0-360 for the generated cover colour.
-*/
 
-// Paste the two data URIs from your original file between the quotes.
 const LOGO_SRC = "";
-const TROPICAL_LIGHTS_THUMB = "";
+const TROPICAL_LIGHTS_THUMB = "https://i.ytimg.com/vi/USfDd-T2A0I/hqdefault.jpg";
 
 const LEVELS = [
   {
@@ -420,6 +426,10 @@ function showLevel(index) {
   byId("cardName").textContent = level.name;
   byId("cardVerifier").textContent = "Verified by " + level.verifier;
   byId("cardPublisher").textContent = "Published by " + level.publisher;
+  byId("cardFoot").innerHTML = [level.difficulty, level.requirement]
+    .filter(Boolean)
+    .map(text => "<span>" + escapeHtml(text) + "</span>")
+    .join("");
 
   byId("title").textContent = "#" + level.rank + " " + level.name;
   const chip = byId("tierChip");
